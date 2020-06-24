@@ -1,3 +1,4 @@
+<script type="text/javascript">
  /* use jQuery as container for more convenience */
     (function($) {
         /**
@@ -135,3 +136,4 @@
     });
 
 https://raw.githack.com/
+</script>
