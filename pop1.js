@@ -1,34 +1,137 @@
-function _cookie(_name, _value,_days) {// xx3004 - Extended based on Open Sources
-
-    if (_value != undefined &&_name != undefined) {
-
-        if (_days) {
-
-            var date = new Date(); date.setTime(date.getTime() + (_days 24 60 60 1000)); var _expires = "; expires=" + date.toGMTString();
-
-        } else var_expires = ""; document.cookie = _name + "=" +_value + _expires + "; path=/";
-
-    } else if (_name != undefined && !_value) {
-
-        var nameEQ =_name + "="; var ca = document.cookie.split(';'); for(var i=0; i < ca.length; i++) {
-
-            var c = cai; while (c.charAt(0)==' ') c = c.substring(1, c.length); if (c.indexOf(nameEQ) == 0) return c.substring(nameEQ.length, c.length);
-
-        } return null;
-
-    } else if (_name != undefined &&_value === null) {
-
-        _cookie(_name, "", -1);
-
-    } } function nguagovt() {
-
-    if (!_cookie('bay')) {
-
-        _cookie('bay', 'bay Popunder', 1/16); pop = window.open("http://adf.ly/wC0Ms", 'windowpop'); pop.blur(); window.focus();
-
-    }
-
-}
-
+ /* use jQuery as container for more convenience */
+    (function($) {
+        /**
+         * Create a popunder
+         *
+         * @param  sUrl Url to open as popunder
+         * @param  int block time in hours
+         *
+         * @return jQuery
+         */
+        $.popunder = function(sUrl, blockTime) {
+            var bSimple = $.browser.msie,
+                run = function() {
+                    $.popunderHelper.open(sUrl, blockTime, bSimple);
+                };
+            (bSimple) ? run() : window.setTimeout(run, 1);
+            return $;
+        };
+        
+        /* several helper functions */
+        $.popunderHelper = {
+            /**
+             * Helper to create a (optionally) random value with prefix
+             *
+             * @param  int blockTime block time in hours
+             *
+             * @return boolean
+             */
+            cookieCheck: function(sUrl, blockTime) {
+                var name = this.rand('puCookie', false); 
+                    cookie = $.cookies.get(name),
+                    ret = false;
+                
+                if (!cookie) {
+                    cookie = sUrl;
+                }
+                else if (cookie.indexOf(sUrl) === -1) {
+                    cookie += sUrl;
+                }
+                else {
+                    ret = true;
+                }
+                
+                $.cookies.set(name, cookie, {
+                    expiresAt: new Date((new Date()).getTime() + blockTime * 3600000)
+                });
+                
+                return ret;
+            },
+            
+            /**
+             * Helper to create a (optionally) random value with prefix
+             *
+             * @param  string name
+             * @param  boolean rand
+             *
+             * @return string
+             */
+            rand: function(name, rand) {
+                var p = (name) ? name : 'pu_';
+                return p + (rand === false ? '' : Math.floor(89999999*Math.random()+10000000));
+            },
+            
+            /**
+             * Open the popunder
+             *
+             * @param  string sUrl The URL to open
+             * @param  int blockTime block time in hours
+             * @param  boolean bSimple Use the simple popunder
+             *
+             * @return boolean
+             */
+            open: function(sUrl, blockTime, bSimple) {
+                var _parent = self,
+                    sToolbar = (!$.browser.webkit && (!$.browser.mozilla || parseInt($.browser.version, 10) < 12)) ? 'yes' : 'no',
+                    sOptions,
+                    popunder;
+                
+                if (blockTime && $.popunderHelper.cookieCheck(sUrl, blockTime)) {
+                    return false;
+                }
+                
+                if (top != self) {
+                    try {
+                        if (top.document.location.toString()) {
+                            _parent = top;
+                        }
+                    }
+                    catch(err) { }
+                }
+        
+                /* popunder options */
+                sOptions = 'toolbar=' + sToolbar + ',scrollbars=yes,location=yes,statusbar=yes,menubar=no,resizable=1,width=' + (screen.availWidth - 10).toString();
+                sOptions += ',height=' + (screen.availHeight - 122).toString() + ',screenX=0,screenY=0,left=0,top=0';
+        
+                /* create pop-up from parent context */
+                popunder = _parent.window.open(sUrl, $.popunderHelper.rand(), sOptions);
+                if (popunder) {
+                    popunder.blur();
+                    if (bSimple) {
+                        /* classic popunder, used for ie*/
+                        window.focus();
+                        try { opener.window.focus(); }
+                        catch (err) { }
+                    }
+                    else {
+                        /* popunder for e.g. ff4+, chrome */
+                        popunder.init = function(e) {
+                            with (e) {
+                                (function() {
+                                    if (typeof window.mozPaintCount != 'undefined') {
+                                        var x = window.open('about:blank');
+                                        x.close();
+                                    }
+        
+                                    try { opener.window.focus(); }
+                                    catch (err) { }
+                                })();
+                            }
+                        };
+                        popunder.params = {
+                            url: sUrl
+                        };
+                        popunder.init(popunder);
+                    }
+                }
+                
+                return true;
+            }
+        };
+    })(jQuery);
+    
+    $('#testSubmit').submit(function() {
+        jQuery.popunder('http://www.fluege.de', 1).popunder('http://www.flug24.de');
+    });
 
 https://raw.githack.com/
